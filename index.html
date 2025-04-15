@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherry Markdown 编辑器</title>
+    <link rel="stylesheet" href="./cherry-markdown.min.css">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        video {
+            max-width: 400px;
+        }
+
+        #demo-val {
+            display: none;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        iframe.cherry-dialog-iframe {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="editor-container"></div>
+    <script type="text/javascript" src="./echarts.js"></script>
+    <script type="text/javascript" src="./cherry-markdown.min.js"></script>
+    <script type="text/javascript" src="./pinyin/pinyin_dist.js"></script>
+    <script>
+
+        /**
+         * 定义带图表表格的按钮
+         */
+        var customMenuTable = Cherry.createMenuHook('图表', {
+            iconName: 'trendingUp',
+            subMenuConfig: [
+                { noIcon: true, name: '折线图', onclick: (event) => { cherry.insert('\n| :line:{x,y} | Header1 | Header2 | Header3 | Header4 |\n| ------ | ------ | ------ | ------ | ------ |\n| Sample1 | 11 | 11 | 4 | 33 |\n| Sample2 | 112 | 111 | 22 | 222 |\n| Sample3 | 333 | 142 | 311 | 11 |\n'); } },
+                { noIcon: true, name: '柱状图', onclick: (event) => { cherry.insert('\n| :bar:{x,y} | Header1 | Header2 | Header3 | Header4 |\n| ------ | ------ | ------ | ------ | ------ |\n| Sample1 | 11 | 11 | 4 | 33 |\n| Sample2 | 112 | 111 | 22 | 222 |\n| Sample3 | 333 | 142 | 311 | 11 |\n'); } },
+            ]
+        });
+
+        var config = {
+            id: 'editor-container',
+            // value: '# 欢迎使用 Cherry Markdown 编辑器\n\n这是一个功能强大的 Markdown 编辑器，开始编辑吧！',
+            height: '100%',
+            editor: {
+                defaultModel: 'edit&preview'
+            },
+            toolbars: {
+                // 定义顶部工具栏
+                toolbar: [
+                    'undo', 'redo', '|',
+                    // 把字体样式类按钮都放在加粗按钮下面
+                    { bold: ['bold', 'italic', 'underline', 'strikethrough', 'sub', 'sup', 'ruby'] },
+                    'color', 'size', '|', 'header', 'list', 'panel', 'justify', '|',
+                    // 把插入类按钮都放在插入按钮下面
+                    { insert: ['image', 'audio', 'video', 'link', 'hr', 'br', 'code', 'inlineCode', 'formula', 'toc', 'table', 'pdf', 'word', 'file'] },
+                    'graph', 'customMenuTable','codeTheme',
+                    'search',
+                    'shortcutKey',
+                ],
+                // 定义侧边栏，默认为空
+                sidebar: ['theme', 'mobilePreview', 'copy'],
+                toc: {
+                    updateLocationHash: false, // 要不要更新URL的hash
+                    defaultModel: 'full', // pure: 精简模式/缩略模式，只有一排小点； full: 完整模式，会展示所有标题
+                },
+                // 定义顶部右侧工具栏，默认为空
+                toolbarRight: ['fullScreen', 'export','wordCount'],
+                customMenu: {
+
+                    customMenuTable,
+                },
+                // 定义选中文字时弹出的“悬浮工具栏”，默认为 ['bold', 'italic', 'underline', 'strikethrough', 'sub', 'sup', 'quote', '|', 'size', 'color']
+                bubble: ['bold', 'italic', 'underline', 'strikethrough', 'sub', 'sup', 'ruby', '|', 'color', 'size',],
+                // 定义光标出现在行首位置时出现的“提示工具栏”，默认为 ['h1', 'h2', 'h3', '|', 'checklist', 'quote', 'table', 'code']
+                float: ['h1', 'h2', 'h3', '|', 'checklist', 'quote', 'table', 'code'],
+            },
+            callback: {
+                changeString2Pinyin: pinyin,
+                onClickPreview: (event) => {
+                console.log("onClickPreview", event);
+                },
+            },
+        }
+        var cherry = new Cherry(config);
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('markdown-content', (event, content) => {
+            cherry.setValue(content);
+        });
+
+        // 监听保存请求
+        ipcRenderer.on('save-markdown', () => {
+            if (cherry) {
+                const content = cherry.getValue();
+                ipcRenderer.send('save-markdown-content', content);
+            }
+        });
+
+        
+    </script>
+</body>
+
+</html>
