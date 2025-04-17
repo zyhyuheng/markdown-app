@@ -56,6 +56,19 @@ function createWindow() {
       label: '文件',
       submenu: [
         {
+          label: '新建',
+          click: async () => {
+            const { filePath } = await dialog.showSaveDialog({
+              filters: [{ name: 'Markdown', extensions: ['md'] }]
+            });
+            if (filePath) {
+              currentFilePath = filePath;
+              fs.writeFileSync(currentFilePath, '');
+              mainWindow.webContents.send('markdown-content', '');
+            }
+          }
+        },
+        {
           label: '打开',
           click: async () => {
             const { filePaths } = await dialog.showOpenDialog({
